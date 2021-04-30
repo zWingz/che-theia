@@ -25,8 +25,10 @@ import { WorkspaceService } from '@theia/workspace/lib/browser';
 describe('Test workspace config files watchers', function () {
   let container: Container;
 
+  let fileService: FileService;
+  let workspaceService: WorkspaceService;
+
   const fileServiceWatchMethod = jest.fn();
-  const workspaceServiceRootsProp = jest.fn();
   const workspaceServiceOnWorkspaceChangedMethod = jest.fn();
 
   beforeEach(() => {
@@ -35,12 +37,11 @@ describe('Test workspace config files watchers', function () {
 
     container = new Container();
 
-    const fileService = ({
+    fileService = ({
       watch: fileServiceWatchMethod,
     } as unknown) as FileService;
 
-    const workspaceService = ({
-      roots: workspaceServiceRootsProp,
+    workspaceService = ({
       onWorkspaceChanged: workspaceServiceOnWorkspaceChangedMethod,
     } as unknown) as WorkspaceService;
 
@@ -91,13 +92,15 @@ describe('Test workspace config files watchers', function () {
           resource: resource,
         },
       ];
-      workspaceServiceRootsProp.mockResolvedValue(roots);
+
+      Object.defineProperty(workspaceService, 'roots', {
+        get: jest.fn(() => roots),
+      });
 
       await devfileWatcher.onStart({} as FrontendApplication);
 
-      // expect(fileServiceWatchMethod.mock.calls.length).toEqual(1);
-      expect(fileServiceWatchMethod).toHaveBeenCalled();
-      // expect(fileServiceWatchMethod).toHaveBeenCalledWith(resource);
+      expect(fileServiceWatchMethod.mock.calls.length).toEqual(1);
+      expect(fileServiceWatchMethod).toHaveBeenCalledWith(resource);
     });
   });
 });
